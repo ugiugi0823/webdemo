@@ -1,0 +1,227 @@
+import { useState, useCallback } from 'react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
+import { ChevronDown, ChevronRight, Copy, Check, Brain } from 'lucide-react'
+import type { Message } from '../types'
+
+interface Props {
+  message: Message
+}
+
+export function ChatMessage({ message }: Props) {
+  const [thinkOpen, setThinkOpen] = useState(false)
+  const isUser = message.role === 'user'
+
+  // Parse thinking from content if not separated
+  let thinking = message.thinking
+  let content = message.content
+
+  if (!thinking && content.includes('<think>')) {
+    const match = content.match(/<think>([\s\S]*?)<\/think>([\s\S]*)/)
+    if (match) {
+      thinking = match[1].trim()
+      content = match[2].trim()
+    }
+  }
+
+  const hasThinking = Boolean(thinking)
+  const isStreaming = message.streaming
+
+  return (
+    <div className={`flex gap-3 ${isUser ? 'flex-row-reverse' : 'flex-row'} mb-6 group`}>
+      {/* Avatar */}
+      <div
+        className="w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-xs font-bold mt-0.5"
+        style={
+          isUser
+            ? { background: 'linear-gradient(135deg, #4f46e5, #7c3aed)', color: '#fff' }
+            : { background: 'linear-gradient(135deg, #7c6bff, #a855f7)', color: '#fff' }
+        }
+      >
+        {isUser ? 'U' : '42'}
+      </div>
+
+      {/* Bubble */}
+      <div className={`flex flex-col gap-2 max-w-[80%] ${isUser ? 'items-end' : 'items-start'}`}>
+        {/* Image preview */}
+        {isUser && message.image && (
+          <img
+            src={`data:${message.image.mimeType};base64,${message.image.base64}`}
+            alt="attached"
+            className="rounded-xl max-h-48 max-w-xs object-cover border"
+            style={{ borderColor: '#2a2f47' }}
+          />
+        )}
+
+        {/* Thinking section */}
+        {hasThinking && (
+          <button
+            onClick={() => setThinkOpen(!thinkOpen)}
+            className="flex items-center gap-2 text-xs px-3 py-1.5 rounded-lg transition-colors self-start"
+            style={{
+              background: '#161a2b',
+              color: '#6b72a8',
+              border: '1px solid #2a2f47',
+            }}
+          >
+            <Brain size={12} />
+            <span>{isStreaming && !content ? '생각 중...' : '추론 과정'}</span>
+            {!isStreaming && (
+              thinkOpen ? <ChevronDown size={11} /> : <ChevronRight size={11} />
+            )}
+            {isStreaming && !content && (
+              <span className="flex gap-0.5 ml-1">
+                <span className="thinking-dot w-1 h-1 rounded-full bg-current inline-block" />
+                <span className="thinking-dot w-1 h-1 rounded-full bg-current inline-block" />
+                <span className="thinking-dot w-1 h-1 rounded-full bg-current inline-block" />
+              </span>
+            )}
+          </button>
+        )}
+
+        {thinkOpen && thinking && (
+          <div
+            className="text-xs rounded-xl px-4 py-3 max-w-full w-full"
+            style={{
+              background: '#161a2b',
+              color: '#6b72a8',
+              border: '1px solid #2a2f47',
+              fontFamily: 'ui-monospace, monospace',
+              whiteSpace: 'pre-wrap',
+              lineHeight: '1.6',
+            }}
+          >
+            {thinking}
+          </div>
+        )}
+
+        {/* Main content */}
+        {(content || (!hasThinking && isStreaming)) && (
+          <div
+            className="rounded-2xl px-4 py-3 text-sm leading-relaxed"
+            style={
+              isUser
+                ? {
+                    background: 'linear-gradient(135deg, #4f46e5, #6d28d9)',
+                    color: '#fff',
+                    borderBottomRightRadius: '4px',
+                  }
+                : {
+                    background: '#181c2a',
+                    color: '#e8eaf0',
+                    border: '1px solid #2a2f47',
+                    borderBottomLeftRadius: '4px',
+                  }
+            }
+          >
+            {isUser ? (
+              <p className="whitespace-pre-wrap">{content}</p>
+            ) : (
+              <div className="prose-chat">
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    code({ className, children, ...props }) {
+                      const match = /language-(\w+)/.exec(className || '')
+                      const code = String(children).replace(/\n$/, '')
+                      return match ? (
+                        <CodeBlock language={match[1]} code={code} />
+                      ) : (
+                        <code className={className} {...props}>
+                          {children}
+                        </code>
+                      )
+                    },
+                  }}
+                >
+                  {content}
+                </ReactMarkdown>
+                {isStreaming && (
+                  <span
+                    className="inline-block w-0.5 h-4 ml-0.5 align-middle animate-pulse"
+                    style={{ background: '#7c6bff' }}
+                  />
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Streaming empty state */}
+        {!content && !hasThinking && isStreaming && (
+          <div
+            className="rounded-2xl px-4 py-3 text-sm"
+            style={{
+              background: '#181c2a',
+              border: '1px solid #2a2f47',
+              borderBottomLeftRadius: '4px',
+            }}
+          >
+            <span className="flex gap-1 items-center" style={{ color: '#555b72' }}>
+              <span className="thinking-dot w-1.5 h-1.5 rounded-full bg-current" />
+              <span className="thinking-dot w-1.5 h-1.5 rounded-full bg-current" />
+              <span className="thinking-dot w-1.5 h-1.5 rounded-full bg-current" />
+            </span>
+          </div>
+        )}
+
+        {/* Timestamp */}
+        <span className="text-xs opacity-0 group-hover:opacity-100 transition-opacity px-1" style={{ color: '#555b72' }}>
+          {formatTime(message.timestamp)}
+        </span>
+      </div>
+    </div>
+  )
+}
+
+function CodeBlock({ language, code }: { language: string; code: string }) {
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = useCallback(() => {
+    navigator.clipboard.writeText(code)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }, [code])
+
+  return (
+    <div className="code-block-wrapper" style={{ position: 'relative' }}>
+      <div
+        className="flex items-center justify-between px-4 py-1.5 text-xs"
+        style={{
+          background: '#0d1117',
+          borderRadius: '8px 8px 0 0',
+          color: '#555b72',
+          borderBottom: '1px solid #2a2f47',
+        }}
+      >
+        <span>{language}</span>
+        <button
+          onClick={handleCopy}
+          className="flex items-center gap-1 px-2 py-0.5 rounded transition-colors"
+          style={{ color: copied ? '#7c6bff' : '#555b72' }}
+        >
+          {copied ? <Check size={12} /> : <Copy size={12} />}
+          <span>{copied ? 'Copied' : 'Copy'}</span>
+        </button>
+      </div>
+      <SyntaxHighlighter
+        language={language}
+        style={vscDarkPlus}
+        customStyle={{
+          margin: 0,
+          borderRadius: '0 0 8px 8px',
+          fontSize: '13px',
+          background: '#0d1117',
+        }}
+      >
+        {code}
+      </SyntaxHighlighter>
+    </div>
+  )
+}
+
+function formatTime(d: Date) {
+  return d.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+}
