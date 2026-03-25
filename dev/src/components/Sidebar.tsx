@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import {
   Menu,
-  Plus,
+  SquarePen,
   Thermometer,
   Brain,
   Shuffle,
@@ -11,6 +11,7 @@ import {
 import type { ChatParams, Conversation } from '../types'
 
 interface SidebarProps {
+  isEmpty: boolean
   params: ChatParams
   setParams: (p: ChatParams) => void
   onNewChat: () => void
@@ -47,6 +48,7 @@ function groupConversations(convs: Conversation[]) {
 }
 
 export function Sidebar({
+  isEmpty,
   params,
   setParams,
   onNewChat,
@@ -65,47 +67,34 @@ export function Sidebar({
       className="flex flex-col shrink-0 transition-all duration-300"
       style={{
         width: collapsed ? '56px' : '260px',
-        background: '#ffffff',
+        background: isEmpty ? '#ffffff' : '#f0f4f9',
         borderRight: '1px solid #e2e8f0',
       }}
     >
       {/* Hamburger header */}
       <div
         className="flex items-center shrink-0"
-        style={{ borderColor: '#e2e8f0', height: '61px', padding: '0 12px', gap: '10px' }}
+        style={{ padding: '10px 12px', gap: '10px' }}
       >
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="w-9 h-9 flex items-center justify-center rounded-lg transition-colors shrink-0"
-          style={{ color: '#64748b' }}
-          onMouseEnter={e => {
-            e.currentTarget.style.background = '#f1f5f9'
-            e.currentTarget.style.color = '#1a1d2e'
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.background = 'transparent'
-            e.currentTarget.style.color = '#64748b'
-          }}
+          className="flex items-center justify-center shrink-0"
+          style={{ color: '#64748b', background: 'none', border: 'none', padding: '6px', cursor: 'pointer' }}
+          onMouseEnter={e => { e.currentTarget.style.color = '#1a1d2e' }}
+          onMouseLeave={e => { e.currentTarget.style.color = '#64748b' }}
           title={collapsed ? '메뉴 열기' : '메뉴 닫기'}
         >
-          <Menu size={20} />
+          <Menu size={18} />
         </button>
-        {!collapsed && (
-          <img src="/favicon.png" alt="LLM42" className="w-6 h-6 rounded-md object-cover" />
-        )}
-        {!collapsed && (
-          <span className="font-semibold text-sm truncate" style={{ color: '#1a1d2e' }}>
-            LLM42
-          </span>
-        )}
+
       </div>
 
       {/* New Chat */}
-      <div className="px-3 py-2 shrink-0 flex justify-center">
+      <div className="px-3 py-1 shrink-0">
         <button
           onClick={onNewChat}
-          className="flex items-center gap-2 rounded-lg text-sm font-medium transition-colors"
-          style={{ color: '#64748b', padding: collapsed ? '6px' : '6px 12px', background: 'transparent' }}
+          className="w-full flex items-center gap-2 rounded-lg text-sm font-medium transition-colors"
+          style={{ color: '#64748b', padding: collapsed ? '6px' : '6px 10px', background: 'transparent', justifyContent: collapsed ? 'center' : 'flex-start' }}
           onMouseEnter={e => {
             e.currentTarget.style.color = '#1a1d2e'
             e.currentTarget.style.background = '#f1f5f9'
@@ -114,10 +103,10 @@ export function Sidebar({
             e.currentTarget.style.color = '#64748b'
             e.currentTarget.style.background = 'transparent'
           }}
-          title="New Chat"
+          title="새 채팅"
         >
-          <Plus size={16} className="shrink-0" />
-          {!collapsed && <span>New Chat</span>}
+          <SquarePen size={17} className="shrink-0" />
+          {!collapsed && <span>새 채팅</span>}
         </button>
       </div>
 
@@ -146,7 +135,7 @@ export function Sidebar({
                           key={conv.id}
                           className="relative group/item flex items-center rounded-lg transition-colors"
                           style={{
-                            background: isActive ? 'rgba(124,107,255,0.08)' : 'transparent',
+                            background: isActive ? 'rgba(14,165,233,0.08)' : 'transparent',
                           }}
                           onMouseEnter={() => setHoveredId(conv.id)}
                           onMouseLeave={() => setHoveredId(null)}
@@ -164,11 +153,11 @@ export function Sidebar({
                             <MessageSquare
                               size={13}
                               className="shrink-0"
-                              style={{ color: isActive ? '#7c6bff' : '#94a3b8' }}
+                              style={{ color: isActive ? '#0ea5e9' : '#94a3b8' }}
                             />
                             <span
                               className="text-xs truncate"
-                              style={{ color: isActive ? '#7c6bff' : '#374151' }}
+                              style={{ color: isActive ? '#0ea5e9' : '#374151' }}
                             >
                               {conv.title}
                             </span>
@@ -244,8 +233,8 @@ export function Sidebar({
                 onChange={(e) => setParams({ ...params, temperature: parseFloat(e.target.value) })}
                 className="w-full h-1.5 rounded-full appearance-none cursor-pointer"
                 style={{
-                  accentColor: '#7c6bff',
-                  background: `linear-gradient(to right, #7c6bff ${(params.temperature / 2) * 100}%, #e2e8f0 ${(params.temperature / 2) * 100}%)`,
+                  accentColor: '#0ea5e9',
+                  background: `linear-gradient(to right, #0ea5e9 ${(params.temperature / 2) * 100}%, #e2e8f0 ${(params.temperature / 2) * 100}%)`,
                 }}
               />
               <div className="flex justify-between text-xs" style={{ color: '#94a3b8' }}>
@@ -257,22 +246,7 @@ export function Sidebar({
         </div>
       )}
 
-      {/* Collapsed bottom icons */}
-      {collapsed && (
-        <div className="px-3 py-4 space-y-3 border-t flex flex-col items-center shrink-0" style={{ borderColor: '#e2e8f0' }}>
-          <button
-            onClick={() => setParams({ ...params, thinking: !params.thinking })}
-            className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
-            style={{
-              background: params.thinking ? 'rgba(124, 107, 255, 0.12)' : '#f8fafc',
-              color: params.thinking ? '#7c6bff' : '#94a3b8',
-            }}
-            title={`Thinking: ${params.thinking ? 'ON' : 'OFF'}`}
-          >
-            <Brain size={15} />
-          </button>
-        </div>
-      )}
+
     </aside>
   )
 }
@@ -282,7 +256,7 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
     <button
       onClick={() => onChange(!value)}
       className="relative inline-flex h-5 w-9 items-center rounded-full transition-colors shrink-0"
-      style={{ background: value ? '#7c6bff' : '#cbd5e1' }}
+      style={{ background: value ? '#0ea5e9' : '#cbd5e1' }}
     >
       <span
         className="inline-block h-3.5 w-3.5 rounded-full bg-white transition-transform shadow-sm"

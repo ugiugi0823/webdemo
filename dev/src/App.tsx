@@ -31,10 +31,10 @@ export default function App() {
   }, [messages])
 
   const handleSelectTask = (task: TaskExample) => {
-    setActiveTask(task)
     if (task.prompt) {
       setPendingPrompt(task.prompt)
     }
+    setActiveTask(null)
   }
 
   const handleNewChat = () => {
@@ -46,8 +46,9 @@ export default function App() {
   const isEmpty = messages.length === 0
 
   return (
-    <div className="flex h-full overflow-hidden" style={{ background: '#f0f4f9' }}>
+    <div className="flex h-full overflow-hidden" style={{ background: isEmpty ? '#f0f4f9' : '#ffffff' }}>
       <Sidebar
+        isEmpty={isEmpty}
         params={params}
         setParams={setParams}
         onNewChat={handleNewChat}
@@ -66,31 +67,17 @@ export default function App() {
         {/* Top bar — only when chatting */}
         {!isEmpty && (
           <div
-            className="flex items-center justify-between px-6 py-3 shrink-0"
+            className="flex items-center justify-between px-4 py-4 shrink-0"
             style={{
-              borderBottom: '1px solid #e2e8f0',
-              background: 'rgba(240, 244, 249, 0.9)',
+              
+              background: 'rgba(255, 255, 255, 0.9)',
               backdropFilter: 'blur(8px)',
             }}
           >
             <div className="flex items-center gap-2">
-              {activeTask ? (
-                <>
-                  <span className="text-sm font-medium" style={{ color: '#1a1d2e' }}>
-                    {activeTask.label}
-                  </span>
-                  <span
-                    className="text-xs px-2 py-0.5 rounded-full"
-                    style={{ background: 'rgba(124, 107, 255, 0.12)', color: '#7c6bff' }}
-                  >
-                    활성
-                  </span>
-                </>
-              ) : (
-                <span className="text-sm font-medium" style={{ color: '#64748b' }}>
-                  42Maru
-                </span>
-              )}
+              <span className="text-xl font-semibold" style={{ color: '#1a1d2e' }}>
+                42Maru
+              </span>
             </div>
 
 
@@ -101,7 +88,10 @@ export default function App() {
         {isEmpty ? (
           <WelcomeScreen
             onSelectTask={handleSelectTask}
-            onSend={sendMessage}
+            onSend={(text, image, doc) => {
+              sendMessage(text, image, doc)
+              setPendingPrompt(undefined)
+            }}
             onStop={stopStreaming}
             isStreaming={isStreaming}
             pendingPrompt={pendingPrompt}
@@ -123,21 +113,20 @@ export default function App() {
             <div
               className="shrink-0"
               style={{
-                background: 'rgba(240, 244, 249, 0.95)',
+                background: 'rgba(255, 255, 255, 0.95)',
                 backdropFilter: 'blur(8px)',
-                borderTop: '1px solid #e2e8f0',
+                
               }}
             >
               <div className="max-w-3xl mx-auto">
                 <ChatInput
-                  onSend={sendMessage}
+                  onSend={(text, image, doc) => {
+              sendMessage(text, image, doc)
+              setPendingPrompt(undefined)
+            }}
                   onStop={stopStreaming}
                   isStreaming={isStreaming}
-                  placeholder={
-                    activeTask?.prompt
-                      ? `${activeTask.label} 모드 — 메세지를 입력하세요.`
-                      : '메세지를 입력하세요. (Shift+Enter: 줄바꿈)'
-                  }
+                  placeholder='메세지를 입력하세요. (Shift+Enter: 줄바꿈)'
                   initialValue={pendingPrompt}
                 />
               </div>

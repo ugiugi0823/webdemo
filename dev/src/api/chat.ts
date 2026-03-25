@@ -4,10 +4,10 @@ const VLLM_URL = '/api/vllm/v1/chat/completions'
 const API_KEY = '3f985cda689134ea45509ec236d7c10df30c8a858a36a791da95674490d4c032'
 
 const MAX_OUTPUT_TOKENS = 2048
-const MAX_OUTPUT_TOKENS_DOC = 512  // smaller for docs to maximise input budget
+const MAX_OUTPUT_TOKENS_DOC = 2048
 // Starting doc char cap — halved on each context-length 400 retry
-const MAX_DOC_CHARS_INITIAL = 300_000
-const MIN_DOC_CHARS = 2_000
+const MAX_DOC_CHARS_INITIAL = 20_000
+const MIN_DOC_CHARS = 500
 
 function buildMessages(history: Message[], systemPrompt?: string, docMaxChars = MAX_DOC_CHARS_INITIAL) {
   const msgs: { role: string; content: string | object[] }[] = []
@@ -38,6 +38,7 @@ function buildMessages(history: Message[], systemPrompt?: string, docMaxChars = 
       })
     } else if (msg.role === 'user' && msg.document) {
       const raw = msg.document.text
+        .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')  // strip control chars
       const truncated = raw.length > docMaxChars
         ? raw.slice(0, docMaxChars) +
           `\n\n[... 문서가 너무 길어 ${(raw.length - docMaxChars).toLocaleString()}자 생략됨 ...]`
@@ -72,7 +73,7 @@ export async function* streamChat(
       messages,
       stream: true,
       max_tokens: maxTokens,
-      chat_template_kwargs: { thinking: false },
+      chat_template_kwargs: { thinking: hasImage ? false : params.thinking },
     }
     if (params.sampling && !hasImage && !hasDoc) {
       body.temperature = params.temperature
@@ -89,7 +90,7 @@ export async function* streamChat(
 
     if (res.status === 400) {
       const errText = await res.text()
-      if (errText.includes('maximum context length') && docMaxChars > MIN_DOC_CHARS) {
+      if ((errText.includes('maximum context length') || errText.includes('context window') || errText.includes('sequence length') || errText.includes('too long') || errText.includes('max_tokens')) && docMaxChars > MIN_DOC_CHARS) {
         docMaxChars = Math.floor(docMaxChars / 2)
         continue  // retry with half the document
       }

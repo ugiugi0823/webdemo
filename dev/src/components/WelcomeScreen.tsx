@@ -9,9 +9,15 @@ interface AttachedImage {
   preview: string
 }
 
+interface AttachedDocument {
+  name: string
+  type: string
+  text: string
+}
+
 interface Props {
   onSelectTask: (task: TaskExample) => void
-  onSend: (text: string, image?: AttachedImage) => void
+  onSend: (text: string, image?: AttachedImage, document?: AttachedDocument) => void
   onStop: () => void
   isStreaming: boolean
   pendingPrompt?: string
@@ -19,8 +25,8 @@ interface Props {
 }
 
 const PILL_COLORS = [
-  { bg: 'rgba(124, 107, 255, 0.08)', border: 'rgba(124, 107, 255, 0.2)', hover: 'rgba(124, 107, 255, 0.15)', text: '#6d51f5' },
-  { bg: 'rgba(168, 85, 247, 0.08)', border: 'rgba(168, 85, 247, 0.2)', hover: 'rgba(168, 85, 247, 0.15)', text: '#9333ea' },
+  { bg: 'rgba(14, 165, 233, 0.08)', border: 'rgba(14, 165, 233, 0.2)', hover: 'rgba(14, 165, 233, 0.15)', text: '#0284c7' },
+  { bg: 'rgba(56, 189, 248, 0.08)', border: 'rgba(56, 189, 248, 0.2)', hover: 'rgba(56, 189, 248, 0.15)', text: '#0ea5e9' },
   { bg: 'rgba(59, 130, 246, 0.08)', border: 'rgba(59, 130, 246, 0.2)', hover: 'rgba(59, 130, 246, 0.15)', text: '#2563eb' },
   { bg: 'rgba(16, 185, 129, 0.08)', border: 'rgba(16, 185, 129, 0.2)', hover: 'rgba(16, 185, 129, 0.15)', text: '#059669' },
   { bg: 'rgba(245, 158, 11, 0.08)', border: 'rgba(245, 158, 11, 0.2)', hover: 'rgba(245, 158, 11, 0.15)', text: '#d97706' },
@@ -29,16 +35,32 @@ const PILL_COLORS = [
 export function WelcomeScreen({ onSelectTask, onSend, onStop, isStreaming, pendingPrompt, activeTask }: Props) {
   return (
     <div
-      className="flex-1 flex flex-col items-center justify-center px-4 overflow-y-auto"
+      className="flex-1 flex flex-col items-center justify-center px-4 overflow-y-auto relative"
       style={{ minHeight: 0 }}
     >
+      <span
+        className="absolute top-4 left-4 text-xl font-semibold"
+        style={{ color: '#1a1d2e' }}
+      >
+        42Maru
+      </span>
+
       <div className="w-full max-w-2xl flex flex-col items-start gap-6 py-8">
 
-        {/* Greeting — horizontal, left-aligned, inset to match input box */}
-        <div className="flex items-center gap-3 greeting-enter w-full px-4">
-          <img src="/favicon.png" alt="LLM42" className="w-8 h-8 rounded-xl object-cover shrink-0 logo-spin-enter" style={{ boxShadow: '0 4px 16px rgba(124,107,255,0.2)' }} />
-          <div>
-            <p className="text-xs" style={{ color: '#94a3b8' }}>LLM42에 오신 것을 환영합니다</p>
+        {/* Greeting + Input + Pills: grouped close together */}
+        <div className="w-full flex flex-col gap-2 chat-input-enter">
+
+          {/* Greeting */}
+          <div className="flex flex-col gap-1 greeting-enter px-4">
+            <div className="flex items-center gap-2">
+              <img
+                src="/favicon.png"
+                alt="LLM42"
+                className="w-6 h-6 rounded-lg object-cover shrink-0 logo-spin-enter"
+                style={{ boxShadow: '0 2px 8px rgba(14,165,233,0.2)' }}
+              />
+              <p className="text-sm font-medium" style={{ color: '#1a1d2e' }}>LLM42에 오신 것을 환영합니다</p>
+            </div>
             <h1
               className="text-2xl font-semibold tracking-tight"
               style={{ color: '#1a1d2e', letterSpacing: '-0.02em' }}
@@ -46,10 +68,8 @@ export function WelcomeScreen({ onSelectTask, onSend, onStop, isStreaming, pendi
               무엇을 도와드릴까요?
             </h1>
           </div>
-        </div>
 
-        {/* Input — centered */}
-        <div className="w-full chat-input-enter">
+          {/* Input */}
           <ChatInput
             onSend={onSend}
             onStop={onStop}
@@ -57,35 +77,36 @@ export function WelcomeScreen({ onSelectTask, onSend, onStop, isStreaming, pendi
             placeholder="LLM42에게 물어보세요..."
             initialValue={pendingPrompt}
           />
-        </div>
 
-        {/* Quick action pills */}
-        <div className="flex flex-wrap justify-start gap-2 px-4">
-          {TASK_EXAMPLES.map((task, i) => {
-            const c = PILL_COLORS[i % PILL_COLORS.length]
-            const isActive = activeTask?.id === task.id
-            return (
-              <button
-                key={task.id}
-                onClick={() => onSelectTask(task)}
-                className="px-4 py-2 rounded-full text-sm font-medium transition-all"
-                style={{
-                  background: isActive ? c.hover : c.bg,
-                  border: `1px solid ${c.border}`,
-                  color: c.text,
-                  boxShadow: isActive ? `0 0 0 2px ${c.border}` : 'none',
-                }}
-                onMouseEnter={e => {
-                  if (!isActive) e.currentTarget.style.background = c.hover
-                }}
-                onMouseLeave={e => {
-                  if (!isActive) e.currentTarget.style.background = c.bg
-                }}
-              >
-                {task.label}
-              </button>
-            )
-          })}
+          {/* Quick action pills */}
+          <div className="w-full flex flex-wrap justify-center gap-2 px-4">
+            {TASK_EXAMPLES.map((task, i) => {
+              const c = PILL_COLORS[i % PILL_COLORS.length]
+              const isActive = activeTask?.id === task.id
+              return (
+                <button
+                  key={task.id}
+                  onClick={() => onSelectTask(task)}
+                  className="px-4 py-2 rounded-full text-sm font-medium transition-all"
+                  style={{
+                    background: isActive ? c.hover : c.bg,
+                    border: `1px solid ${c.border}`,
+                    color: c.text,
+                    boxShadow: isActive ? `0 0 0 2px ${c.border}` : 'none',
+                  }}
+                  onMouseEnter={e => {
+                    if (!isActive) e.currentTarget.style.background = c.hover
+                  }}
+                  onMouseLeave={e => {
+                    if (!isActive) e.currentTarget.style.background = c.bg
+                  }}
+                >
+                  {task.label}
+                </button>
+              )
+            })}
+          </div>
+
         </div>
 
       </div>

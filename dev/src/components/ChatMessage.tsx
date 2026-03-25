@@ -36,7 +36,7 @@ export function ChatMessage({ message }: Props) {
         className="w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-xs font-bold mt-0.5 overflow-hidden"
         style={
           isUser
-            ? { background: 'linear-gradient(135deg, #4f46e5, #7c3aed)', color: '#fff' }
+            ? { background: 'linear-gradient(135deg, #0369a1, #0284c7)', color: '#fff' }
             : undefined
         }
       >
@@ -53,11 +53,11 @@ export function ChatMessage({ message }: Props) {
         {isUser && message.document && (
           <div
             className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs"
-            style={{ background: '#f5f3ff', border: '1px solid #ede9fe', color: '#6d28d9' }}
+            style={{ background: '#f0f9ff', border: '1px solid #e0f2fe', color: '#0369a1' }}
           >
-            <FileText size={13} style={{ color: '#7c6bff', flexShrink: 0 }} />
+            <FileText size={13} style={{ color: '#0ea5e9', flexShrink: 0 }} />
             <span className="truncate" style={{ maxWidth: '200px' }}>{message.document.name}</span>
-            <span className="uppercase font-medium shrink-0" style={{ color: '#a78bfa' }}>{message.document.type}</span>
+            <span className="uppercase font-medium shrink-0" style={{ color: '#7dd3fc' }}>{message.document.type}</span>
           </div>
         )}
 
@@ -77,9 +77,9 @@ export function ChatMessage({ message }: Props) {
             onClick={() => setThinkOpen(!thinkOpen)}
             className="flex items-center gap-2 text-xs px-3 py-1.5 rounded-lg transition-colors self-start"
             style={{
-              background: '#f5f3ff',
-              color: '#7c6bff',
-              border: '1px solid #ede9fe',
+              background: '#f0f9ff',
+              color: '#0ea5e9',
+              border: '1px solid #e0f2fe',
             }}
           >
             <Brain size={12} />
@@ -101,9 +101,9 @@ export function ChatMessage({ message }: Props) {
           <div
             className="text-xs rounded-xl px-4 py-3 max-w-full w-full"
             style={{
-              background: '#f5f3ff',
-              color: '#7c3aed',
-              border: '1px solid #ede9fe',
+              background: '#f0f9ff',
+              color: '#0284c7',
+              border: '1px solid #e0f2fe',
               fontFamily: 'ui-monospace, monospace',
               whiteSpace: 'pre-wrap',
               lineHeight: '1.6',
@@ -120,16 +120,13 @@ export function ChatMessage({ message }: Props) {
             style={
               isUser
                 ? {
-                    background: 'linear-gradient(135deg, #4f46e5, #6d28d9)',
+                    background: 'linear-gradient(135deg, #0369a1, #0369a1)',
                     color: '#fff',
                     borderBottomRightRadius: '4px',
                   }
                 : {
-                    background: '#ffffff',
+                    background: 'transparent',
                     color: '#1a1d2e',
-                    border: '1px solid #e2e8f0',
-                    borderBottomLeftRadius: '4px',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
                   }
             }
           >
@@ -158,7 +155,7 @@ export function ChatMessage({ message }: Props) {
                 {isStreaming && (
                   <span
                     className="inline-block w-0.5 h-4 ml-0.5 align-middle animate-pulse"
-                    style={{ background: '#7c6bff' }}
+                    style={{ background: '#0ea5e9' }}
                   />
                 )}
               </div>
@@ -218,7 +215,7 @@ function CodeBlock({ language, code }: { language: string; code: string }) {
         <button
           onClick={handleCopy}
           className="flex items-center gap-1 px-2 py-0.5 rounded transition-colors"
-          style={{ color: copied ? '#a78bfa' : '#94a3b8' }}
+          style={{ color: copied ? '#7dd3fc' : '#94a3b8' }}
         >
           {copied ? <Check size={12} /> : <Copy size={12} />}
           <span>{copied ? 'Copied' : 'Copy'}</span>

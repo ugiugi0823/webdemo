@@ -64,6 +64,7 @@ export function ChatInput({ onSend, onStop, isStreaming, placeholder, initialVal
     if (!el) return
     el.style.height = 'auto'
     el.style.height = Math.min(el.scrollHeight, 200) + 'px'
+    el.style.overflowY = el.scrollHeight > 200 ? 'auto' : 'hidden'
   }, [text])
 
   const clearAttachments = () => {
@@ -130,11 +131,11 @@ export function ChatInput({ onSend, onStop, isStreaming, placeholder, initialVal
   const handleSend = useCallback(() => {
     if (isStreaming) { onStop(); return }
     const t = text.trim()
-    if (!t && !image && !document) return
+    if (!t && !image && !attachedDoc) return
     onSend(t, image ?? undefined, attachedDoc ?? undefined)
     setText('')
     clearAttachments()
-  }, [text, image, document, isStreaming, onSend, onStop])
+  }, [text, image, attachedDoc, isStreaming, onSend, onStop])
 
   const handleKey = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -148,8 +149,8 @@ export function ChatInput({ onSend, onStop, isStreaming, placeholder, initialVal
 
   const canSend = !isStreaming && (text.trim().length > 0 || image !== null || attachedDoc !== null) && !docLoading
 
-  const borderColor = dragOver ? '#7c6bff' : focused ? '#7c6bff' : '#e2e8f0'
-  const boxShadow = (dragOver || focused) ? '0 0 0 3px rgba(124,107,255,0.12)' : '0 1px 4px rgba(0,0,0,0.06)'
+  const borderColor = dragOver ? '#0ea5e9' : focused ? '#0ea5e9' : '#e2e8f0'
+  const boxShadow = (dragOver || focused) ? '0 0 0 3px rgba(14,165,233,0.12)' : '0 1px 4px rgba(0,0,0,0.06)'
 
   return (
     <div className="px-4 pb-4 pt-2">
@@ -178,18 +179,18 @@ export function ChatInput({ onSend, onStop, isStreaming, placeholder, initialVal
           <div className="px-4 pt-3 flex items-center gap-2">
             <div
               className="flex items-center gap-2.5 px-3 py-2 rounded-xl"
-              style={{ background: '#f5f3ff', border: '1px solid #ede9fe', maxWidth: '100%' }}
+              style={{ background: '#f0f9ff', border: '1px solid #e0f2fe', maxWidth: '100%' }}
             >
               {docLoading ? (
-                <Loader size={14} style={{ color: '#7c6bff' }} className="animate-spin shrink-0" />
+                <Loader size={14} style={{ color: '#0ea5e9' }} className="animate-spin shrink-0" />
               ) : (
-                <FileText size={14} style={{ color: '#7c6bff' }} className="shrink-0" />
+                <FileText size={14} style={{ color: '#0ea5e9' }} className="shrink-0" />
               )}
-              <span className="text-xs truncate" style={{ color: '#6d28d9', maxWidth: '240px' }}>
+              <span className="text-xs truncate" style={{ color: '#0369a1', maxWidth: '240px' }}>
                 {docLoading ? '텍스트 추출 중...' : attachedDoc?.name}
               </span>
               {attachedDoc && (
-                <span className="text-xs shrink-0 uppercase font-medium" style={{ color: '#a78bfa' }}>
+                <span className="text-xs shrink-0 uppercase font-medium" style={{ color: '#7dd3fc' }}>
                   {attachedDoc!.type}
                 </span>
               )}
@@ -220,7 +221,7 @@ export function ChatInput({ onSend, onStop, isStreaming, placeholder, initialVal
           placeholder={placeholder ?? '메세지를 입력하세요. (Shift+Enter: 줄바꿈)'}
           rows={1}
           className="w-full resize-none bg-transparent px-4 py-3.5 text-sm outline-none"
-          style={{ color: '#1a1d2e', caretColor: '#7c6bff', lineHeight: '1.6', maxHeight: '200px' }}
+          style={{ color: '#1a1d2e', caretColor: '#0ea5e9', lineHeight: '1.6', maxHeight: '200px' }}
         />
 
         {/* Actions */}
@@ -229,8 +230,8 @@ export function ChatInput({ onSend, onStop, isStreaming, placeholder, initialVal
           <div className="relative" ref={plusRef}>
             <button
               onClick={() => setPlusOpen((v) => !v)}
-              className="w-7 h-7 rounded-full flex items-center justify-center transition-all"
-              style={{ background: plusOpen ? '#7c6bff' : '#f1f5f9', color: plusOpen ? '#fff' : '#64748b' }}
+              className="flex items-center justify-center transition-all"
+              style={{ background: 'none', border: 'none', color: plusOpen ? '#0ea5e9' : '#64748b', padding: '4px' }}
               title="파일 첨부"
             >
               <Plus size={15} style={{ transform: plusOpen ? 'rotate(45deg)' : 'none', transition: 'transform 0.15s' }} />
@@ -248,7 +249,7 @@ export function ChatInput({ onSend, onStop, isStreaming, placeholder, initialVal
                   onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'}
                   onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                 >
-                  <FileText size={14} style={{ color: '#7c6bff' }} />
+                  <FileText size={14} style={{ color: '#0ea5e9' }} />
                   <span>파일 업로드</span>
                 </button>
               </div>
@@ -263,8 +264,8 @@ export function ChatInput({ onSend, onStop, isStreaming, placeholder, initialVal
               disabled={!canSend && !isStreaming}
               className="w-8 h-8 rounded-xl flex items-center justify-center transition-all"
               style={{
-                background: isStreaming ? '#ede9fe' : (canSend ? 'linear-gradient(135deg, #7c6bff, #a855f7)' : '#f1f5f9'),
-                color: isStreaming ? '#7c6bff' : (canSend ? '#fff' : '#94a3b8'),
+                background: isStreaming ? '#e0f2fe' : (canSend ? 'linear-gradient(135deg, #0ea5e9, #38bdf8)' : '#f1f5f9'),
+                color: isStreaming ? '#0ea5e9' : (canSend ? '#fff' : '#94a3b8'),
                 cursor: (canSend || isStreaming) ? 'pointer' : 'not-allowed',
               }}
               title={isStreaming ? '중지' : '전송 (Enter)'}
@@ -283,7 +284,6 @@ export function ChatInput({ onSend, onStop, isStreaming, placeholder, initialVal
         className="hidden"
         onChange={handleFileChange}
       />
-
     </div>
   )
 }
