@@ -2,8 +2,8 @@ import { useState, useCallback } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
-import { ChevronDown, ChevronRight, Copy, Check, Brain } from 'lucide-react'
+import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism'
+import { ChevronDown, ChevronRight, Copy, Check, Brain, FileText } from 'lucide-react'
 import type { Message } from '../types'
 
 interface Props {
@@ -33,25 +33,41 @@ export function ChatMessage({ message }: Props) {
     <div className={`flex gap-3 ${isUser ? 'flex-row-reverse' : 'flex-row'} mb-6 group`}>
       {/* Avatar */}
       <div
-        className="w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-xs font-bold mt-0.5"
+        className="w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-xs font-bold mt-0.5 overflow-hidden"
         style={
           isUser
             ? { background: 'linear-gradient(135deg, #4f46e5, #7c3aed)', color: '#fff' }
-            : { background: 'linear-gradient(135deg, #7c6bff, #a855f7)', color: '#fff' }
+            : undefined
         }
       >
-        {isUser ? 'U' : '42'}
+        {isUser ? (
+          <span style={{ color: '#fff' }}>U</span>
+        ) : (
+          <img src="/favicon.png" alt="LLM42" className={`w-full h-full object-cover${isStreaming ? " avatar-spin" : ""}`} />
+        )}
       </div>
 
       {/* Bubble */}
       <div className={`flex flex-col gap-2 max-w-[80%] ${isUser ? 'items-end' : 'items-start'}`}>
+        {/* Document badge */}
+        {isUser && message.document && (
+          <div
+            className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs"
+            style={{ background: '#f5f3ff', border: '1px solid #ede9fe', color: '#6d28d9' }}
+          >
+            <FileText size={13} style={{ color: '#7c6bff', flexShrink: 0 }} />
+            <span className="truncate" style={{ maxWidth: '200px' }}>{message.document.name}</span>
+            <span className="uppercase font-medium shrink-0" style={{ color: '#a78bfa' }}>{message.document.type}</span>
+          </div>
+        )}
+
         {/* Image preview */}
         {isUser && message.image && (
           <img
             src={`data:${message.image.mimeType};base64,${message.image.base64}`}
             alt="attached"
             className="rounded-xl max-h-48 max-w-xs object-cover border"
-            style={{ borderColor: '#2a2f47' }}
+            style={{ borderColor: '#e2e8f0' }}
           />
         )}
 
@@ -61,9 +77,9 @@ export function ChatMessage({ message }: Props) {
             onClick={() => setThinkOpen(!thinkOpen)}
             className="flex items-center gap-2 text-xs px-3 py-1.5 rounded-lg transition-colors self-start"
             style={{
-              background: '#161a2b',
-              color: '#6b72a8',
-              border: '1px solid #2a2f47',
+              background: '#f5f3ff',
+              color: '#7c6bff',
+              border: '1px solid #ede9fe',
             }}
           >
             <Brain size={12} />
@@ -85,9 +101,9 @@ export function ChatMessage({ message }: Props) {
           <div
             className="text-xs rounded-xl px-4 py-3 max-w-full w-full"
             style={{
-              background: '#161a2b',
-              color: '#6b72a8',
-              border: '1px solid #2a2f47',
+              background: '#f5f3ff',
+              color: '#7c3aed',
+              border: '1px solid #ede9fe',
               fontFamily: 'ui-monospace, monospace',
               whiteSpace: 'pre-wrap',
               lineHeight: '1.6',
@@ -109,10 +125,11 @@ export function ChatMessage({ message }: Props) {
                     borderBottomRightRadius: '4px',
                   }
                 : {
-                    background: '#181c2a',
-                    color: '#e8eaf0',
-                    border: '1px solid #2a2f47',
+                    background: '#ffffff',
+                    color: '#1a1d2e',
+                    border: '1px solid #e2e8f0',
                     borderBottomLeftRadius: '4px',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
                   }
             }
           >
@@ -154,12 +171,13 @@ export function ChatMessage({ message }: Props) {
           <div
             className="rounded-2xl px-4 py-3 text-sm"
             style={{
-              background: '#181c2a',
-              border: '1px solid #2a2f47',
+              background: '#ffffff',
+              border: '1px solid #e2e8f0',
               borderBottomLeftRadius: '4px',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
             }}
           >
-            <span className="flex gap-1 items-center" style={{ color: '#555b72' }}>
+            <span className="flex gap-1 items-center" style={{ color: '#94a3b8' }}>
               <span className="thinking-dot w-1.5 h-1.5 rounded-full bg-current" />
               <span className="thinking-dot w-1.5 h-1.5 rounded-full bg-current" />
               <span className="thinking-dot w-1.5 h-1.5 rounded-full bg-current" />
@@ -168,7 +186,7 @@ export function ChatMessage({ message }: Props) {
         )}
 
         {/* Timestamp */}
-        <span className="text-xs opacity-0 group-hover:opacity-100 transition-opacity px-1" style={{ color: '#555b72' }}>
+        <span className="text-xs opacity-0 group-hover:opacity-100 transition-opacity px-1" style={{ color: '#94a3b8' }}>
           {formatTime(message.timestamp)}
         </span>
       </div>
@@ -190,9 +208,9 @@ function CodeBlock({ language, code }: { language: string; code: string }) {
       <div
         className="flex items-center justify-between px-4 py-1.5 text-xs"
         style={{
-          background: '#0d1117',
+          background: '#1e2235',
           borderRadius: '8px 8px 0 0',
-          color: '#555b72',
+          color: '#94a3b8',
           borderBottom: '1px solid #2a2f47',
         }}
       >
@@ -200,7 +218,7 @@ function CodeBlock({ language, code }: { language: string; code: string }) {
         <button
           onClick={handleCopy}
           className="flex items-center gap-1 px-2 py-0.5 rounded transition-colors"
-          style={{ color: copied ? '#7c6bff' : '#555b72' }}
+          style={{ color: copied ? '#a78bfa' : '#94a3b8' }}
         >
           {copied ? <Check size={12} /> : <Copy size={12} />}
           <span>{copied ? 'Copied' : 'Copy'}</span>
@@ -208,12 +226,13 @@ function CodeBlock({ language, code }: { language: string; code: string }) {
       </div>
       <SyntaxHighlighter
         language={language}
-        style={vscDarkPlus}
+        style={oneLight}
         customStyle={{
           margin: 0,
           borderRadius: '0 0 8px 8px',
           fontSize: '13px',
-          background: '#0d1117',
+          border: '1px solid #e2e8f0',
+          borderTop: 'none',
         }}
       >
         {code}

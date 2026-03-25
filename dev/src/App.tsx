@@ -17,6 +17,10 @@ export default function App() {
     sendMessage,
     stopStreaming,
     clearChat,
+    conversations,
+    currentConvId,
+    loadConversation,
+    deleteConversation,
   } = useChat()
 
   const bottomRef = useRef<HTMLDivElement>(null)
@@ -42,100 +46,104 @@ export default function App() {
   const isEmpty = messages.length === 0
 
   return (
-    <div className="flex h-full overflow-hidden" style={{ background: '#0d0f16' }}>
+    <div className="flex h-full overflow-hidden" style={{ background: '#f0f4f9' }}>
       <Sidebar
         params={params}
         setParams={setParams}
-        activeTask={activeTask}
-        setActiveTask={(task) => {
-          setActiveTask(task)
-          if (task?.prompt) setPendingPrompt(task.prompt)
-          else setPendingPrompt(undefined)
-        }}
         onNewChat={handleNewChat}
+        conversations={conversations}
+        currentConvId={currentConvId}
+        onLoadConversation={(conv) => {
+          loadConversation(conv)
+          setPendingPrompt(undefined)
+          setActiveTask(null)
+        }}
+        onDeleteConversation={deleteConversation}
       />
 
       {/* Main */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Top bar */}
-        <div
-          className="flex items-center justify-between px-6 py-3 shrink-0"
-          style={{
-            borderBottom: '1px solid #1e2235',
-            background: 'rgba(13, 15, 22, 0.8)',
-            backdropFilter: 'blur(8px)',
-          }}
-        >
-          <div className="flex items-center gap-2">
-            {activeTask ? (
-              <>
-                <span className="text-sm font-medium" style={{ color: '#e8eaf0' }}>
-                  {activeTask.label}
+        {/* Top bar — only when chatting */}
+        {!isEmpty && (
+          <div
+            className="flex items-center justify-between px-6 py-3 shrink-0"
+            style={{
+              borderBottom: '1px solid #e2e8f0',
+              background: 'rgba(240, 244, 249, 0.9)',
+              backdropFilter: 'blur(8px)',
+            }}
+          >
+            <div className="flex items-center gap-2">
+              {activeTask ? (
+                <>
+                  <span className="text-sm font-medium" style={{ color: '#1a1d2e' }}>
+                    {activeTask.label}
+                  </span>
+                  <span
+                    className="text-xs px-2 py-0.5 rounded-full"
+                    style={{ background: 'rgba(124, 107, 255, 0.12)', color: '#7c6bff' }}
+                  >
+                    활성
+                  </span>
+                </>
+              ) : (
+                <span className="text-sm font-medium" style={{ color: '#64748b' }}>
+                  42Maru
                 </span>
-                <span
-                  className="text-xs px-2 py-0.5 rounded-full"
-                  style={{ background: 'rgba(124, 107, 255, 0.15)', color: '#a78bfa' }}
-                >
-                  활성
-                </span>
-              </>
-            ) : (
-              <span className="text-sm" style={{ color: '#555b72' }}>
-                LLM42 Demo
-              </span>
-            )}
-          </div>
-
-          <div className="flex items-center gap-3 text-xs" style={{ color: '#555b72' }}>
-            {params.thinking && (
-              <span
-                className="px-2 py-0.5 rounded-full"
-                style={{ background: 'rgba(124, 107, 255, 0.1)', color: '#7c6bff' }}
-              >
-                Thinking ON
-              </span>
-            )}
-            <span>Temp {params.temperature.toFixed(1)}</span>
-          </div>
-        </div>
-
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto">
-          {isEmpty ? (
-            <WelcomeScreen onSelectTask={handleSelectTask} />
-          ) : (
-            <div className="max-w-3xl mx-auto px-4 py-6">
-              {messages.map((msg) => (
-                <ChatMessage key={msg.id} message={msg} />
-              ))}
-              <div ref={bottomRef} />
+              )}
             </div>
-          )}
-        </div>
 
-        {/* Input */}
-        <div
-          className="shrink-0"
-          style={{
-            background: 'rgba(13, 15, 22, 0.9)',
-            backdropFilter: 'blur(8px)',
-            borderTop: '1px solid #1e2235',
-          }}
-        >
-          <div className="max-w-3xl mx-auto">
-            <ChatInput
-              onSend={sendMessage}
-              onStop={stopStreaming}
-              isStreaming={isStreaming}
-              placeholder={
-                activeTask?.prompt
-                  ? `${activeTask.label} 모드 — 메세지를 입력하세요.`
-                  : '메세지를 입력하세요. (Shift+Enter: 줄바꿈)'
-              }
-              initialValue={pendingPrompt}
-            />
+
           </div>
-        </div>
+        )}
+
+        {/* Welcome screen — input centered */}
+        {isEmpty ? (
+          <WelcomeScreen
+            onSelectTask={handleSelectTask}
+            onSend={sendMessage}
+            onStop={stopStreaming}
+            isStreaming={isStreaming}
+            pendingPrompt={pendingPrompt}
+            activeTask={activeTask}
+          />
+        ) : (
+          <>
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto">
+              <div className="max-w-3xl mx-auto px-4 py-6">
+                {messages.map((msg) => (
+                  <ChatMessage key={msg.id} message={msg} />
+                ))}
+                <div ref={bottomRef} />
+              </div>
+            </div>
+
+            {/* Input at bottom */}
+            <div
+              className="shrink-0"
+              style={{
+                background: 'rgba(240, 244, 249, 0.95)',
+                backdropFilter: 'blur(8px)',
+                borderTop: '1px solid #e2e8f0',
+              }}
+            >
+              <div className="max-w-3xl mx-auto">
+                <ChatInput
+                  onSend={sendMessage}
+                  onStop={stopStreaming}
+                  isStreaming={isStreaming}
+                  placeholder={
+                    activeTask?.prompt
+                      ? `${activeTask.label} 모드 — 메세지를 입력하세요.`
+                      : '메세지를 입력하세요. (Shift+Enter: 줄바꿈)'
+                  }
+                  initialValue={pendingPrompt}
+                />
+              </div>
+            </div>
+          </>
+        )}
       </main>
     </div>
   )

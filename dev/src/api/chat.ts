@@ -3,7 +3,13 @@ import type { Message, ChatParams } from '../types'
 const VLLM_URL = '/api/vllm/v1/chat/completions'
 const API_KEY = '3f985cda689134ea45509ec236d7c10df30c8a858a36a791da95674490d4c032'
 
-function buildMessages(history: Message[], systemPrompt?: string) {
+const MAX_OUTPUT_TOKENS = 2048
+const MAX_OUTPUT_TOKENS_DOC = 512  // smaller for docs to maximise input budget
+// Starting doc char cap — halved on each context-length 400 retry
+const MAX_DOC_CHARS_INITIAL = 300_000
+const MIN_DOC_CHARS = 2_000
+
+function buildMessages(history: Message[], systemPrompt?: string, docMaxChars = MAX_DOC_CHARS_INITIAL) {
   const msgs: { role: string; content: string | object[] }[] = []
 
   if (systemPrompt) {
@@ -16,21 +22,27 @@ function buildMessages(history: Message[], systemPrompt?: string) {
       const base64 = msg.image.base64
       const fileName = msg.image.name
 
+      // text (placeholder) MUST come before image_url — vLLM multimodal rule
       msgs.push({
         role: 'user',
         content: [
           {
-            type: 'image_url',
-            image_url: {
-              url: `data:${mimeType};base64,${base64}`,
-            },
-          },
-          {
             type: 'text',
             text: `<|mime_start|>{"id": "image_00", "type": "${mimeType}", "filename": "${fileName}"}<|mime_end|><|image_start|><|IMAGE_PAD|><|image_end|>\n${msg.content}`,
           },
+          {
+            type: 'image_url',
+            image_url: { url: `data:${mimeType};base64,${base64}` },
+          },
         ],
       })
+    } else if (msg.role === 'user' && msg.document) {
+      const raw = msg.document.text
+      const truncated = raw.length > docMaxChars
+        ? raw.slice(0, docMaxChars) +
+          `\n\n[... 문서가 너무 길어 ${(raw.length - docMaxChars).toLocaleString()}자 생략됨 ...]`
+        : raw
+      msgs.push({ role: 'user', content: `[첨부 문서: ${msg.document.name}]\n\n${truncated}\n\n---\n${msg.content}` })
     } else {
       msgs.push({ role: msg.role, content: msg.content })
     }
@@ -45,37 +57,50 @@ export async function* streamChat(
   systemPrompt?: string,
   signal?: AbortSignal
 ): AsyncGenerator<{ token?: string; thinking?: string; done?: boolean }> {
-  const messages = buildMessages(history, systemPrompt)
+  const hasImage = history.some((m) => m.role === 'user' && m.image)
+  const hasDoc = history.some((m) => m.role === 'user' && m.document)
+  const maxTokens = hasImage ? 4096 : hasDoc ? MAX_OUTPUT_TOKENS_DOC : MAX_OUTPUT_TOKENS
 
-  const body: Record<string, unknown> = {
-    model: 'LLM42',
-    messages,
-    stream: true,
-    chat_template_kwargs: {
-      thinking: params.thinking,
-    },
-  }
+  let docMaxChars = MAX_DOC_CHARS_INITIAL
+  let res: Response
 
-  if (params.sampling) {
-    body.temperature = params.temperature
-  }
+  // Retry loop: halve document size on each context-length 400 error
+  while (true) {
+    const messages = buildMessages(history, systemPrompt, docMaxChars)
+    const body: Record<string, unknown> = {
+      model: 'LLM42',
+      messages,
+      stream: true,
+      max_tokens: maxTokens,
+      chat_template_kwargs: { thinking: false },
+    }
+    if (params.sampling && !hasImage && !hasDoc) {
+      body.temperature = params.temperature
+    }
 
-  const res = await fetch(VLLM_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${API_KEY}`,
-    },
-    body: JSON.stringify(body),
-    signal,
-  })
+    res = await fetch(VLLM_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${API_KEY}` },
+      body: JSON.stringify(body),
+      signal,
+    })
 
-  if (!res.ok) {
+    if (res.ok) break
+
+    if (res.status === 400) {
+      const errText = await res.text()
+      if (errText.includes('maximum context length') && docMaxChars > MIN_DOC_CHARS) {
+        docMaxChars = Math.floor(docMaxChars / 2)
+        continue  // retry with half the document
+      }
+      throw new Error(`API error ${res.status}: ${errText}`)
+    }
+
     const err = await res.text()
     throw new Error(`API error ${res.status}: ${err}`)
   }
 
-  const reader = res.body!.getReader()
+  const reader = res!.body!.getReader()
   const decoder = new TextDecoder()
   let buffer = ''
 
