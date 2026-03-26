@@ -282,7 +282,7 @@ export function ChatMessage({ message, onResend, isLastUser }: Props) {
               title="복사"
               className="flex items-center justify-center w-7 h-7 rounded-lg"
               style={{ background: 'none', border: 'none', cursor: 'pointer', color: copied ? '#4ade80' : '#94a3b8' }}
-              onMouseEnter={e => { if (!copied) e.currentTarget.style.color = '#0ea5e9' }}
+              onMouseEnter={e => { if (!copied) e.currentTarget.style.color = '#0369a1' }}
               onMouseLeave={e => { if (!copied) e.currentTarget.style.color = copied ? '#4ade80' : '#94a3b8' }}
             >
               {copied ? <Check size={14} /> : <Copy size={14} />}
@@ -294,7 +294,7 @@ export function ChatMessage({ message, onResend, isLastUser }: Props) {
                   title="편집"
                   className="flex items-center justify-center w-7 h-7 rounded-lg"
                   style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}
-                  onMouseEnter={e => { e.currentTarget.style.color = '#0ea5e9' }}
+                  onMouseEnter={e => { e.currentTarget.style.color = '#0369a1' }}
                   onMouseLeave={e => { e.currentTarget.style.color = '#94a3b8' }}
                 >
                   <Pencil size={14} />
@@ -304,7 +304,7 @@ export function ChatMessage({ message, onResend, isLastUser }: Props) {
                   title="재전송"
                   className="flex items-center justify-center w-7 h-7 rounded-lg"
                   style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}
-                  onMouseEnter={e => { e.currentTarget.style.color = '#0ea5e9' }}
+                  onMouseEnter={e => { e.currentTarget.style.color = '#0369a1' }}
                   onMouseLeave={e => { e.currentTarget.style.color = '#94a3b8' }}
                 >
                   <RotateCcw size={14} />
