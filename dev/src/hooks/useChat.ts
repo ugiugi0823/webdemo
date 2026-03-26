@@ -69,15 +69,29 @@ function persistConversations(convs: Conversation[]) {
   }
 }
 
+function loadLastSession(): { messages: Message[]; convId: string | null; params: ChatParams } {
+  try {
+    const convId = localStorage.getItem('llm42_current_conv')
+    if (!convId) return { messages: [], convId: null, params: DEFAULT_PARAMS }
+    const convs = loadConversations()
+    const conv = convs.find(c => c.id === convId)
+    if (!conv) return { messages: [], convId: null, params: DEFAULT_PARAMS }
+    return { messages: conv.messages, convId, params: conv.params }
+  } catch {
+    return { messages: [], convId: null, params: DEFAULT_PARAMS }
+  }
+}
+
 export function useChat() {
-  const [messages, setMessages] = useState<Message[]>([])
-  const [params, setParams] = useState<ChatParams>(DEFAULT_PARAMS)
+  const lastSession = loadLastSession()
+  const [messages, setMessages] = useState<Message[]>(lastSession.messages)
+  const [params, setParams] = useState<ChatParams>(lastSession.params)
   const [isStreaming, setIsStreaming] = useState(false)
   const [activeTask, setActiveTask] = useState<TaskExample | null>(null)
   const [conversations, setConversations] = useState<Conversation[]>(loadConversations)
   const [apiLogs, setApiLogs] = useState<ApiLogEntry[]>([])
   const abortRef = useRef<AbortController | null>(null)
-  const currentConvId = useRef<string | null>(null)
+  const currentConvId = useRef<string | null>(lastSession.convId)
 
   // Save conversation when streaming ends
   useEffect(() => {
@@ -109,6 +123,7 @@ export function useChat() {
         next = [updated, ...prev].slice(0, 30)
       }
       persistConversations(next)
+      try { localStorage.setItem('llm42_current_conv', convId) } catch { /* ignore */ }
       return next
     })
   }, [isStreaming]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -239,6 +254,7 @@ export function useChat() {
     setMessages([])
     setIsStreaming(false)
     currentConvId.current = null
+    try { localStorage.removeItem('llm42_current_conv') } catch { /* ignore */ }
   }, [])
 
   const loadConversation = useCallback((conv: Conversation) => {
@@ -248,6 +264,7 @@ export function useChat() {
     setIsStreaming(false)
     setActiveTask(null)
     currentConvId.current = conv.id
+    try { localStorage.setItem('llm42_current_conv', conv.id) } catch { /* ignore */ }
   }, [])
 
   const deleteConversation = useCallback((id: string) => {
