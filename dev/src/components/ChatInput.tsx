@@ -325,8 +325,8 @@ export function ChatInput({
               disabled={!canSend && !isStreaming}
               className="w-8 h-8 rounded-xl flex items-center justify-center transition-all"
               style={{
-                background: isStreaming ? '#e0f2fe' : (canSend ? 'linear-gradient(135deg, #0369a1, #0284c7)' : (dark ? '#263044' : '#f1f5f9')),
-                color: isStreaming ? '#0ea5e9' : (canSend ? '#fff' : (dark ? '#4a5568' : '#94a3b8')),
+                background: isStreaming ? 'linear-gradient(135deg, #0369a1, #0284c7)' : (canSend ? 'linear-gradient(135deg, #0369a1, #0284c7)' : (dark ? '#263044' : '#f1f5f9')),
+                color: isStreaming ? '#fff' : (canSend ? '#fff' : (dark ? '#4a5568' : '#94a3b8')),
                 cursor: (canSend || isStreaming) ? 'pointer' : 'not-allowed',
               }}
               title={isStreaming ? '중지' : '전송 (Enter)'}

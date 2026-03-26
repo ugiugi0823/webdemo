@@ -135,75 +135,84 @@ export function useChat() {
         timestamp: new Date(),
       }
 
-      const assistantId = uid()
-      const assistantMsg: Message = {
-        id: assistantId,
-        role: 'assistant',
+      let currentAssistantId = uid()
+      setMessages((prev) => [...prev, userMsg, {
+        id: currentAssistantId,
+        role: 'assistant' as const,
         content: '',
         thinking: undefined,
         timestamp: new Date(),
         streaming: true,
-      }
-
-      setMessages((prev) => [...prev, userMsg, assistantMsg])
+      }])
       setIsStreaming(true)
 
       abortRef.current = new AbortController()
 
       try {
         const history = filterEmptyTurns(trimHistory([...messages, userMsg]))
-        let thinkBuf = ''
-        let contentBuf = ''
-
         const onLog = (entry: ApiLogEntry) =>
           setApiLogs((prev) => [...prev.slice(-199), entry])
 
-        for await (const chunk of streamChat(
-          history,
-          params,
-          activeTask?.systemPrompt,
-          abortRef.current.signal,
-          onLog
-        )) {
-          if (chunk.done) break
-
-          if (chunk.thinking) {
-            thinkBuf += chunk.thinking
+        const runStream = async (msgId: string) => {
+          let thinkBuf = ''
+          let contentBuf = ''
+          for await (const chunk of streamChat(
+            history,
+            params,
+            activeTask?.systemPrompt,
+            abortRef.current!.signal,
+            onLog
+          )) {
+            if (chunk.done) break
+            if (chunk.thinking) thinkBuf += chunk.thinking
+            if (chunk.token) contentBuf += chunk.token
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === msgId
+                  ? { ...m, content: contentBuf, thinking: thinkBuf || undefined }
+                  : m
+              )
+            )
           }
-          if (chunk.token) {
-            contentBuf += chunk.token
-          }
+          return { thinkBuf, contentBuf }
+        }
 
+        let { thinkBuf, contentBuf } = await runStream(currentAssistantId)
+
+        // content 없으면 1회 재시도
+        if (!contentBuf) {
           setMessages((prev) =>
             prev.map((m) =>
-              m.id === assistantId
-                ? { ...m, content: contentBuf, thinking: thinkBuf || undefined }
+              m.id === currentAssistantId
+                ? { ...m, content: '', thinking: undefined, streaming: true }
                 : m
             )
           )
+          abortRef.current = new AbortController()
+          const retry = await runStream(currentAssistantId)
+          thinkBuf = retry.thinkBuf
+          contentBuf = retry.contentBuf
         }
 
-        // If model only produced reasoning_content (no content), promote thinking to content
+        const finalContent = contentBuf || '답변을 반환할 수 없습니다.'
         setMessages((prev) =>
-          prev.map((m) => {
-            if (m.id !== assistantId) return m
-            if (!m.content && m.thinking) {
-              return { ...m, content: m.thinking, thinking: undefined, streaming: false }
-            }
-            return { ...m, streaming: false }
-          })
+          prev.map((m) =>
+            m.id === currentAssistantId
+              ? { ...m, content: finalContent, thinking: thinkBuf || undefined, streaming: false }
+              : m
+          )
         )
       } catch (err: unknown) {
         if (err instanceof Error && err.name === 'AbortError') {
           setMessages((prev) =>
             prev.map((m) =>
-              m.id === assistantId ? { ...m, streaming: false } : m
+              m.id === currentAssistantId ? { ...m, streaming: false } : m
             )
           )
         } else {
           setMessages((prev) =>
             prev.map((m) =>
-              m.id === assistantId
+              m.id === currentAssistantId
                 ? {
                     ...m,
                     content: `오류가 발생했습니다: ${err instanceof Error ? err.message : String(err)}`,

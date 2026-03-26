@@ -130,9 +130,9 @@ export function ChatMessage({ message, onResend, isLastUser }: Props) {
             onClick={() => setThinkOpen(!thinkOpen)}
             className="flex items-center gap-2 text-xs px-3 py-1.5 rounded-lg transition-colors self-start"
             style={{
-              background: dark ? '#0f2744' : '#e0f2fe',
+              background: 'rgba(3, 105, 161, 0.12)',
               color: '#0369a1',
-              border: `1px solid ${dark ? '#1e3a5f' : '#bae6fd'}`,
+              border: '1px solid rgba(3, 105, 161, 0.4)',
             }}
           >
             <Brain size={12} />
@@ -154,9 +154,9 @@ export function ChatMessage({ message, onResend, isLastUser }: Props) {
           <div
             className="text-xs rounded-xl px-4 py-3 max-w-full w-full"
             style={{
-              background: dark ? '#0f2744' : '#f0f9ff',
-              color: dark ? '#7dd3fc' : '#0284c7',
-              border: `1px solid ${dark ? '#1e3a5f' : '#e0f2fe'}`,
+              background: 'rgba(3, 105, 161, 0.06)',
+              color: '#0369a1',
+              border: '1px solid rgba(3, 105, 161, 0.2)',
               fontFamily: 'ui-monospace, monospace',
               whiteSpace: 'pre-wrap',
               lineHeight: '1.6',
@@ -386,6 +386,3 @@ function CodeBlock({ language, code }: { language: string; code: string }) {
   )
 }
 
-function formatTime(d: Date) {
-  return d.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
-}

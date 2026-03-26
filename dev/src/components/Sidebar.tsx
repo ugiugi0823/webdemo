@@ -137,24 +137,22 @@ export function Sidebar({
                         <div
                           key={conv.id}
                           className="relative group/item flex items-center rounded-lg transition-colors"
-                          style={{ background: isActive ? 'rgba(14,165,233,0.08)' : 'transparent' }}
-                          onMouseEnter={() => setHoveredId(conv.id)}
-                          onMouseLeave={() => setHoveredId(null)}
+                          style={{ background: isActive ? '#d3e3fd' : 'transparent' }}
+                          onMouseEnter={(e) => { setHoveredId(conv.id); if (!isActive) e.currentTarget.style.background = hoverBg }}
+                          onMouseLeave={(e) => { setHoveredId(null); if (!isActive) e.currentTarget.style.background = 'transparent' }}
                         >
                           <button
                             onClick={() => onLoadConversation(conv)}
                             className="flex-1 flex items-center gap-2 px-2 py-2 text-left min-w-0"
-                            onMouseEnter={e => { if (!isActive) e.currentTarget.parentElement!.style.background = hoverBg }}
-                            onMouseLeave={e => { if (!isActive) e.currentTarget.parentElement!.style.background = 'transparent' }}
                           >
                             <MessageSquare
                               size={13}
                               className="shrink-0"
-                              style={{ color: isActive ? '#0ea5e9' : (dark ? '#64748b' : '#94a3b8') }}
+                              style={{ color: isActive ? '#0842a0' : (dark ? '#64748b' : '#94a3b8') }}
                             />
                             <span
                               className="text-xs truncate"
-                              style={{ color: isActive ? '#0ea5e9' : (dark ? '#94a3b8' : '#374151') }}
+                              style={{ color: isActive ? '#0842a0' : (dark ? '#94a3b8' : '#374151'), fontWeight: isActive ? 500 : 400 }}
                             >
                               {conv.title}
                             </span>

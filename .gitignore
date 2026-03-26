@@ -3,3 +3,6 @@ vllm_api.key
 *.key
 .env
 .env.*
+
+# 개발 무관 자료 (이미지, 실험 결과, 아카이브)
+_archive/
