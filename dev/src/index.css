@@ -181,3 +181,37 @@ body {
 .logo-spin-enter {
   animation: logoSpinEnter 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
+
+/* Dark mode overrides */
+.dark-mode textarea::placeholder {
+  color: #4a5568;
+}
+.dark-mode .prose-chat {
+  color: #e2e8f0;
+}
+.dark-mode .prose-chat h1,
+.dark-mode .prose-chat h2,
+.dark-mode .prose-chat h3 {
+  color: #e2e8f0;
+}
+.dark-mode .prose-chat code {
+  background: #0f2744;
+  color: #7dd3fc;
+}
+.dark-mode .prose-chat blockquote {
+  color: #94a3b8;
+}
+.dark-mode .prose-chat th {
+  background: #1e2130;
+  color: #e2e8f0;
+}
+.dark-mode .prose-chat th,
+.dark-mode .prose-chat td {
+  border-color: #263044;
+}
+.dark-mode ::-webkit-scrollbar-thumb {
+  background: #374151;
+}
+.dark-mode ::-webkit-scrollbar-thumb:hover {
+  background: #4a5568;
+}

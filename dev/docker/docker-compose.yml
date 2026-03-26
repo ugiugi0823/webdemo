@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  llm42-demo:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: llm42-demo:latest
+    container_name: llm42-demo
+    ports:
+      - "8080:80"
+    restart: unless-stopped

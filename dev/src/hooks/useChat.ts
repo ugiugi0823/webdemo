@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { streamChat } from '../api/chat'
-import type { Message, ChatParams, TaskExample, Conversation, AttachedDocument } from '../types'
+import type { Message, ChatParams, TaskExample, Conversation, AttachedDocument, ApiLogEntry } from '../types'
 
 const DEFAULT_PARAMS: ChatParams = {
   thinking: true,
@@ -10,6 +10,40 @@ const DEFAULT_PARAMS: ChatParams = {
 
 function uid() {
   return Math.random().toString(36).slice(2, 10)
+}
+
+// Frontend memory management: trim oldest messages when context is too large
+const MAX_CONTEXT_CHARS = 80_000
+
+function filterEmptyTurns(history: Message[]): Message[] {
+  const result: Message[] = []
+  for (let i = 0; i < history.length; i++) {
+    const m = history[i]
+    // Skip (user, empty-assistant) pairs entirely
+    if (m.role === 'user' && i + 1 < history.length) {
+      const next = history[i + 1]
+      if (next.role === 'assistant' && !next.content && !next.thinking) {
+        i++ // skip both
+        continue
+      }
+    }
+    // Skip standalone empty assistant messages
+    if (m.role === 'assistant' && !m.content && !m.thinking) continue
+    result.push(m)
+  }
+  return result
+}
+
+function trimHistory(history: Message[]): Message[] {
+  const msgChars = (m: Message) =>
+    m.content.length + (m.document?.text.length ?? 0)
+  let total = history.reduce((s, m) => s + msgChars(m), 0)
+  if (total <= MAX_CONTEXT_CHARS) return history
+  const trimmed = [...history]
+  while (total > MAX_CONTEXT_CHARS && trimmed.length > 2) {
+    total -= msgChars(trimmed.shift()!)
+  }
+  return trimmed
 }
 
 function loadConversations(): Conversation[] {
@@ -41,6 +75,7 @@ export function useChat() {
   const [isStreaming, setIsStreaming] = useState(false)
   const [activeTask, setActiveTask] = useState<TaskExample | null>(null)
   const [conversations, setConversations] = useState<Conversation[]>(loadConversations)
+  const [apiLogs, setApiLogs] = useState<ApiLogEntry[]>([])
   const abortRef = useRef<AbortController | null>(null)
   const currentConvId = useRef<string | null>(null)
 
@@ -87,10 +122,14 @@ export function useChat() {
       if (isStreaming) return
       if (!text.trim() && !image && !document) return
 
+      const hasImage = !!image
+      const effectiveThinking = params.thinking && !hasImage
+
       const userMsg: Message = {
         id: uid(),
         role: 'user',
         content: text.trim(),
+        usedThinking: effectiveThinking,
         image,
         document,
         timestamp: new Date(),
@@ -112,15 +151,19 @@ export function useChat() {
       abortRef.current = new AbortController()
 
       try {
-        const history = [...messages, userMsg]
+        const history = filterEmptyTurns(trimHistory([...messages, userMsg]))
         let thinkBuf = ''
         let contentBuf = ''
+
+        const onLog = (entry: ApiLogEntry) =>
+          setApiLogs((prev) => [...prev.slice(-199), entry])
 
         for await (const chunk of streamChat(
           history,
           params,
           activeTask?.systemPrompt,
-          abortRef.current.signal
+          abortRef.current.signal,
+          onLog
         )) {
           if (chunk.done) break
 
@@ -140,10 +183,15 @@ export function useChat() {
           )
         }
 
+        // If model only produced reasoning_content (no content), promote thinking to content
         setMessages((prev) =>
-          prev.map((m) =>
-            m.id === assistantId ? { ...m, streaming: false } : m
-          )
+          prev.map((m) => {
+            if (m.id !== assistantId) return m
+            if (!m.content && m.thinking) {
+              return { ...m, content: m.thinking, thinking: undefined, streaming: false }
+            }
+            return { ...m, streaming: false }
+          })
         )
       } catch (err: unknown) {
         if (err instanceof Error && err.name === 'AbortError') {
@@ -206,6 +254,21 @@ export function useChat() {
     }
   }, [])
 
+  const clearApiLogs = useCallback(() => setApiLogs([]), [])
+
+  const resendFrom = useCallback(
+    (messageId: string, newText: string) => {
+      if (isStreaming) return
+      const idx = messages.findIndex((m) => m.id === messageId)
+      if (idx < 0) return
+      const original = messages[idx]
+      // Trim history up to (not including) this message, then resend
+      setMessages(messages.slice(0, idx))
+      sendMessage(newText, original.image, original.document)
+    },
+    [messages, isStreaming, sendMessage]
+  )
+
   return {
     messages,
     params,
@@ -214,11 +277,14 @@ export function useChat() {
     activeTask,
     setActiveTask,
     sendMessage,
+    resendFrom,
     stopStreaming,
     clearChat,
     conversations,
     currentConvId,
     loadConversation,
     deleteConversation,
+    apiLogs,
+    clearApiLogs,
   }
 }

@@ -169,6 +169,7 @@ async function extractHwp(file: File): Promise<string> {
     } else {
       data = content
     }
+    if (!data) continue
     const text = parseHwpRecords(data)
     if (text) texts.push(text)
   }

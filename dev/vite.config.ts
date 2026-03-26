@@ -8,6 +8,7 @@ export default defineConfig({
     tailwindcss(),
   ],
   server: {
+    port: 9090,
     proxy: {
       '/api/vllm': {
         target: 'http://192.168.0.234:9015',

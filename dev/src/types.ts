@@ -9,6 +9,7 @@ export interface Message {
   role: 'user' | 'assistant'
   content: string
   thinking?: string
+  usedThinking?: boolean
   image?: { base64: string; mimeType: string; name: string }
   document?: AttachedDocument
   timestamp: Date
@@ -27,6 +28,7 @@ export type TaskType =
   | 'keyword'
   | 'summary'
   | 'query'
+  | 'image'
 
 export interface TaskExample {
   id: TaskType
@@ -34,6 +36,14 @@ export interface TaskExample {
   icon: string
   prompt: string
   systemPrompt?: string
+  imageUrl?: string   // public image to auto-attach when pill is clicked
+}
+
+export interface ApiLogEntry {
+  id: string
+  time: Date
+  type: 'request' | 'response' | 'error' | 'done'
+  data: string
 }
 
 export interface Conversation {
@@ -72,5 +82,13 @@ export const TASK_EXAMPLES: TaskExample[] = [
     icon: 'Search',
     prompt: '###\nquery1: "집에서 쉽게 만들 수 있는 간단한 요리가 뭐가 있을까요?"\nanswer: "파스타를 추천드립니다. 간단한 재료로도 금방 만들 수 있고 맛있게 즐길 수 있습니다."\nquery2: "그걸 만들 때 필요한 재료가 뭐에요?"\nresponse:',
     systemPrompt: '당신은 쿼리 작성 및 개선을 도와주는 AI입니다. 주어진 쿼리를 분석하고 더 효과적으로 완성하거나 개선하세요.',
+  },
+  {
+    id: 'image',
+    label: '🖼️ 이미지 분석',
+    icon: 'Image',
+    prompt: '참가기업 알려줘',
+    imageUrl: '/test.jpg',
+    systemPrompt: '당신은 이미지를 분석하고 설명하는 AI입니다. 이미지의 내용을 자세하고 명확하게 설명하세요.',
   },
 ]
