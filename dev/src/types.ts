@@ -20,6 +20,7 @@ export interface ChatParams {
   thinking: boolean
   temperature: number
   sampling: boolean
+  systemPrompt?: string
 }
 
 export type TaskType =
@@ -87,7 +88,7 @@ export const TASK_EXAMPLES: TaskExample[] = [
     id: 'image',
     label: '🖼️ 이미지 분석',
     icon: 'Image',
-    prompt: '참가기업 알려줘',
+    prompt: 'MWC 행사에 참여하는 기업 알려줘',
     imageUrl: '/test.jpg',
     systemPrompt: '당신은 이미지를 분석하고 설명하는 AI입니다. 이미지의 내용을 자세하고 명확하게 설명하세요.',
   },

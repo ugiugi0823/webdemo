@@ -10,6 +10,7 @@ import {
   Moon,
   Sun,
   X,
+  AlignLeft,
 } from 'lucide-react'
 import type { ChatParams, Conversation } from '../types'
 import { useTheme } from '../context/ThemeContext'
@@ -221,7 +222,7 @@ export function Sidebar({
                 style={{
                   left: '64px',
                   bottom: '60px',
-                  width: '220px',
+                  width: '260px',
                   background: dark ? '#1e2130' : '#ffffff',
                   border: `1px solid ${borderColor}`,
                   boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
@@ -275,8 +276,32 @@ function SettingsPanel({
   textSecondary: string
 }) {
   const textPrimary = dark ? '#e2e8f0' : '#1a1d2e'
+  const borderColor = dark ? '#263044' : '#e2e8f0'
   return (
     <div className="space-y-3">
+      {/* System Prompt */}
+      <div className="space-y-1">
+        <div className="flex items-center gap-2 text-sm" style={{ color: textSecondary }}>
+          <AlignLeft size={14} />
+          <span>시스템 프롬프트</span>
+        </div>
+        <textarea
+          rows={3}
+          value={params.systemPrompt ?? ''}
+          onChange={(e) => setParams({ ...params, systemPrompt: e.target.value || undefined })}
+          placeholder="시스템 프롬프트를 입력하세요..."
+          className="w-full rounded-lg text-xs resize-none"
+          style={{
+            background: dark ? '#141720' : '#f8fafc',
+            border: `1px solid ${borderColor}`,
+            color: textPrimary,
+            padding: '6px 8px',
+            outline: 'none',
+            fontFamily: 'inherit',
+          }}
+        />
+      </div>
+
       {/* Sampling */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm" style={{ color: textSecondary }}>

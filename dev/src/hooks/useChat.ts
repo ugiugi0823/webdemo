@@ -174,7 +174,7 @@ export function useChat() {
           for await (const chunk of streamChat(
             history,
             params,
-            activeTask?.systemPrompt,
+            activeTask?.systemPrompt ?? params.systemPrompt,
             abortRef.current!.signal,
             onLog
           )) {
