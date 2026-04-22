@@ -1,3 +1,5 @@
+import { QUERY_SYSTEM_PROMPT } from './prompts/query'
+
 export interface AttachedDocument {
   name: string
   type: string   // file extension
@@ -82,7 +84,7 @@ export const TASK_EXAMPLES: TaskExample[] = [
     label: '✏️ 쿼리 완성',
     icon: 'Search',
     prompt: '###\nquery1: "집에서 쉽게 만들 수 있는 간단한 요리가 뭐가 있을까요?"\nanswer: "파스타를 추천드립니다. 간단한 재료로도 금방 만들 수 있고 맛있게 즐길 수 있습니다."\nquery2: "그걸 만들 때 필요한 재료가 뭐에요?"\nresponse:',
-    systemPrompt: '당신은 쿼리 작성 및 개선을 도와주는 AI입니다. 주어진 쿼리를 분석하고 더 효과적으로 완성하거나 개선하세요.',
+    systemPrompt: QUERY_SYSTEM_PROMPT,
   },
   {
     id: 'image',

@@ -12,7 +12,8 @@ import {
   X,
   AlignLeft,
 } from 'lucide-react'
-import type { ChatParams, Conversation } from '../types'
+import type { ChatParams, Conversation, TaskExample } from '../types'
+import { TASK_EXAMPLES } from '../types'
 import { useTheme } from '../context/ThemeContext'
 
 interface SidebarProps {
@@ -20,6 +21,7 @@ interface SidebarProps {
   params: ChatParams
   setParams: (p: ChatParams) => void
   onNewChat: () => void
+  onSelectTask: (task: TaskExample) => void
   conversations: Conversation[]
   currentConvId: React.MutableRefObject<string | null>
   onLoadConversation: (conv: Conversation) => void
@@ -57,6 +59,7 @@ export function Sidebar({
   params,
   setParams,
   onNewChat,
+  onSelectTask,
   conversations,
   currentConvId,
   onLoadConversation,
@@ -116,6 +119,33 @@ export function Sidebar({
           {!collapsed && <span>새 채팅</span>}
         </button>
       </div>
+
+      {/* Task shortcuts */}
+      {!collapsed && (
+        <div className="px-3 py-1 shrink-0">
+          <div className="flex flex-col gap-0.5">
+            <p className="text-xs font-medium px-1 pb-1" style={{ color: dark ? '#64748b' : '#94a3b8' }}>데모 기능</p>
+            {TASK_EXAMPLES.map((task) => (
+              <button
+                key={task.id}
+                onClick={() => onSelectTask(task)}
+                className="w-full flex items-center gap-2 rounded-lg text-sm transition-colors text-left"
+                style={{ color: textSecondary, padding: '5px 10px', background: 'transparent', border: 'none', cursor: 'pointer' }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.color = textPrimary
+                  e.currentTarget.style.background = hoverBg
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.color = textSecondary
+                  e.currentTarget.style.background = 'transparent'
+                }}
+              >
+                <span>{task.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Conversation history */}
       <div className="flex-1 overflow-y-auto">

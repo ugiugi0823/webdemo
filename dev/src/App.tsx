@@ -97,7 +97,7 @@ export default function App() {
       setPendingImage(null)
     }
 
-    setActiveTask(null)
+    setActiveTask(task)
   }
 
   const handleNewChat = () => {
@@ -124,6 +124,7 @@ export default function App() {
         params={params}
         setParams={setParams}
         onNewChat={handleNewChat}
+        onSelectTask={(task) => { handleNewChat(); handleSelectTask(task) }}
         conversations={conversations}
         currentConvId={currentConvId}
         onLoadConversation={(conv) => {
@@ -160,6 +161,7 @@ export default function App() {
               sendMessage(text, image, doc)
               setPendingPrompt(undefined)
               setPendingImage(null)
+              setActiveTask(null)
             }}
             onStop={stopStreaming}
             isStreaming={isStreaming}

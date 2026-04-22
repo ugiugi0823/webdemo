@@ -58,7 +58,7 @@ docker compose -f docker/docker-compose.yml up -d --build
 ### 개발 (`vite.config.ts`)
 ```ts
 proxy: {
-  '/api/vllm':    → http://192.168.0.234:9015
+  '/api/vllm':    → https://llm42-api-int.42maru.com
   '/api/fastapi': → http://192.168.0.234:9016
 }
 ```
@@ -66,7 +66,7 @@ proxy: {
 ### 프로덕션 (`docker/nginx.conf`)
 ```nginx
 location /api/vllm/ {
-    proxy_pass http://192.168.0.234:9015;
+    proxy_pass https://llm42-api-int.42maru.com;
     proxy_buffering off;    # SSE 스트리밍 필수 — 없으면 스트리밍 안 됨
     proxy_read_timeout 300s;
 }
@@ -92,7 +92,7 @@ dev/
     ├── api/chat.ts             # vLLM API 클라이언트 (핵심)
     ├── hooks/useChat.ts        # 채팅 상태 전체 관리
     └── components/
-        ├── Sidebar.tsx          # 대화 목록 + 설정
+        ├── Sidebar.tsx          # 대화 목록 + 데모 기능 바로가기 + 설정 (시스템 프롬프트, Sampling, Temperature)
         ├── ChatMessage.tsx      # 메시지 버블
         ├── ChatInput.tsx        # 입력창 + 파일 첨부
         └── WelcomeScreen.tsx    # 빈 화면 태스크 카드
@@ -119,6 +119,16 @@ dev/
 - 이미지 첨부 시: `max_tokens: 4096`, `temperature` 제외
 - 문서 첨부 시: `temperature` 제외
 - `sampling=false` 시: `temperature: 0` (greedy decoding)
+
+#### 시스템 프롬프트 우선순위
+
+`useChat.ts`의 `sendMessage`에서 아래 순으로 적용:
+
+```ts
+activeTask?.systemPrompt ?? params.systemPrompt
+```
+
+태스크 카드 선택 시 해당 태스크의 `systemPrompt`가 우선. 없으면 설정 패널에서 입력한 `params.systemPrompt` 사용.
 
 #### `buildMessages(history, systemPrompt, docMaxChars)`
 
@@ -299,37 +309,18 @@ interface Message {
 }
 
 interface ChatParams {
-  thinking: boolean    // Thinking 모드
-  temperature: number  // 0.0 ~ 2.0
-  sampling: boolean    // false → temperature=0 (greedy)
+  thinking: boolean       // Thinking 모드
+  temperature: number     // 0.0 ~ 2.0
+  sampling: boolean       // false → temperature=0 (greedy)
+  systemPrompt?: string   // 사용자 정의 시스템 프롬프트 (설정 패널에서 입력)
 }
 ```
 
 ---
 
-## 미해결 버그: thinking 히스토리 불일치
+## 알려진 미해결 버그
 
-**증상**: thinking=true로 대화 후 false로 전환 시 후속 응답 이상/미출력.
-
-**원인**: API 전송 시 user 메시지에 suffix를 주입하지만 `messages` state에는 원본만 저장. 다음 턴에 모델이 자신이 실제 본 것과 다른 히스토리를 받음.
-
-**현재 상태**:
-- `Message.usedThinking` 필드: ✅ 추가됨 (`types.ts`)
-- `usedThinking` 저장: ✅ `useChat.ts`에서 저장 중
-- ❌ **`buildMessages`에서 suffix 재적용 미구현** (아래 수정 방법 참고)
-
-**수정 방법** (`src/api/chat.ts`의 `buildMessages` 일반 user 분기):
-
-```ts
-} else {
-  const content = msg.usedThinking
-    ? `${msg.content}\n\n질문의 의도를 파악해`
-    : msg.content
-  msgs.push({ role: msg.role, content })
-}
-```
-
-그리고 `streamChat` 내의 `historyForApi` suffix 주입 로직을 삭제하고 `buildMessages(history, ...)` 로 교체.
+**thinking 전환 시 hang**: thinking=true → false 전환 후 다음 요청에서 브라우저가 응답하지 않는 현상. 30초 fetch 타임아웃(`AbortSignal.timeout`)으로 임시 처리 중. 근본 원인 미확정.
 
 ---
 

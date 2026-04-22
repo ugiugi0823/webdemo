@@ -73,7 +73,7 @@ export async function* streamChat(
   let docMaxChars = MAX_DOC_CHARS_INITIAL
   let res: Response
 
-  const FETCH_TIMEOUT_MS = 30_000
+  const FETCH_TIMEOUT_MS = 120_000
 
   // Retry loop: halve document size on each context-length 400 error
   while (true) {

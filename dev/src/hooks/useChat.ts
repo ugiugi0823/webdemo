@@ -5,7 +5,7 @@ import type { Message, ChatParams, TaskExample, Conversation, AttachedDocument, 
 const DEFAULT_PARAMS: ChatParams = {
   thinking: true,
   temperature: 1.0,
-  sampling: true,
+  sampling: false,
 }
 
 function uid() {
@@ -120,7 +120,7 @@ export function useChat() {
         next = [...prev]
         next[idx] = updated
       } else {
-        next = [updated, ...prev].slice(0, 30)
+        next = [updated, ...prev].slice(0, 15)
       }
       persistConversations(next)
       try { localStorage.setItem('llm42_current_conv', convId) } catch { /* ignore */ }
